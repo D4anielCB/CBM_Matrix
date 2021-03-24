@@ -844,7 +844,7 @@ def TemporadasRC(x): #135 Episodios
 		for s in range(0, int(inicio[0])):
 			del temps[0]
 			i= int(inicio[0])
-	if x==None:
+	if x==-1:
 		for b,tempname in temps:
 			tempname = re.compile('\d+').findall(tempname)
 			if tempname:
@@ -861,7 +861,7 @@ def TemporadasRC(x): #135 Episodios
 		#if Ctrakt == None:
 		#	return
 		AddDir("-------------Autoplay-------------" , "", 40, isFolder=False)
-	if x==None:
+	if x==-1:
 		for b,tempname in temps:
 			tempname = re.compile('\d+').findall(tempname)
 			if tempname:
@@ -1428,10 +1428,10 @@ def PlayUrl(name, url, iconimage=None, info='', sub=''):
 			eInfo.pop('cast', 1)
 			#eInfo.pop('tmdb_id', 1)
 			#eInfo['plot'] += "\nAired: " +Data(str(eInfo['premiered']))
-			eInfo['plot'] += u"\nExibição: " +Data(str(eInfo['premiered'])) if MUlang == "pt-BR" else "\nAired: " +Data(str(eInfo['premiered']))
-			listitem.setInfo( type="Video", infoLabels= eInfo )
-			#ST(eInfo)
-			listitem.setInfo( type="Video", infoLabels= {'genre': '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]} )
+			#eInfo['plot'] = u"\n[COLOR button_focus]Exibição:[/COLOR] " +Data(str(eInfo['premiered'])) if MUlang == "pt-BR" else "\nAired: " +Data(str(eInfo['premiered']))
+			eInfo['genre'] = '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]
+			listitem.setInfo( "video",  eInfo )
+			#listitem.setInfo( "Video",  {'genre': '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]} )
 		except:
 			try:
 				metah2 = eval(metah)
@@ -1513,7 +1513,7 @@ def AddDir(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=T
 			else:
 				metah.pop('playcount', 1)
 			#metah['cast']=['a','b']
-			liz=xbmcgui.ListItem(DL +""+name, iconImage=metah['cover_url'], thumbnailImage=metah['cover_url'])
+			liz=xbmcgui.ListItem(DL +""+name, metah['cover_url'], metah['cover_url'])
 			liz.setArt({"poster": metah['cover_url'], "banner": metah['cover_url'], "fanart": metah['backdrop_url'] })
 			liz.setInfo( type="Video", infoLabels= metah )
 	else:
@@ -1568,6 +1568,9 @@ def AddDir2(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=
 					count+=1
 				liz.setCast(eInfo2['cast'])
 			eInfo2.pop('cast', 1)
+			eInfo2.pop('genre', 1)
+			#eInfo2['genre'] = "b"
+			#eInfo2['tagline'] = "a"
 			liz.setInfo( "video", eInfo2 )
 		else:
 			liz=xbmcgui.ListItem(DL +""+name)
@@ -1740,8 +1743,8 @@ def RemoveFromLists(i):
 def Update(): #200
 	Path = xbmc.translatePath( xbmcaddon.Addon().getAddonInfo('path') )
 	try:
-		fonte = OpenURL( "https://raw.githubusercontent.com/D4anielCB/CBm/main/default.py" )
-		prog = re.compile('#checkintegritycbmeta').findall(fonte)
+		fonte = OpenURL( "https://raw.githubusercontent.com/D4anielCB/CBM_Matrix/main/default.py" )
+		prog = re.compile('#checkintegritycbmetamatrix').findall(fonte)
 		if prog:
 			py = os.path.join( Path, "default.py")
 			file = open(py, "w")
@@ -2066,4 +2069,4 @@ elif mode == 523:
 	listreaiepimeta()
 	setViewS2()
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
-#checkintegritycbmeta
+#checkintegritycbmetamatrix
