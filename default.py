@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys, xbmcplugin, xbmcgui, xbmcaddon, xbmc, os, json, hashlib, re, unicodedata, math, xbmcvfs
 import shutil
-from urllib.parse import urlparse, quote_plus
+from urllib.parse import urlparse, quote_plus, unquote
 from urllib.request import urlopen, Request
 import urllib.request, urllib.parse, urllib.error
 import urllib.parse
 #from metahandler import metahandlers
 from metadatautils import MetadataUtils
+mg = MetadataUtils()
+mg.tmdb.api_key = 'bd6af17904b638d482df1a924f1eabb4'
 
 AddonID = 'plugin.video.CubePlayMeta'
 Addon = xbmcaddon.Addon(AddonID)
@@ -107,7 +109,7 @@ def Categories(): #70
 	#if Ctrakt:
 		#AddDir("[COLOR orange][B][Atualizar Animes][/B][/COLOR]" , "", 509, "https://accelerator-origin.kkomando.com/wp-content/uploads/2015/04/update2-970x546.jpg", "https://accelerator-origin.kkomando.com/wp-content/uploads/2015/04/update2-970x546.jpg", isFolder=False)
 	AddDir("[COLOR blue][B][Animes Fav][/B][/COLOR]", "" ,508 , "", "https://walter.trakt.tv/images/shows/000/000/455/fanarts/full/e69f8ca9ad.jpg.webp")
-	AddDir("[COLOR green][B][Animes Torrents][/B][/COLOR]", "" ,520 , "", "https://walter.trakt.tv/images/shows/000/000/455/fanarts/full/e69f8ca9ad.jpg.webp")
+	AddDir("[COLOR green][B][Erai-Raws][/B][/COLOR]", "" ,520 , "", "https://walter.trakt.tv/images/shows/000/000/455/fanarts/full/e69f8ca9ad.jpg.webp")
 # --------------  common
 def OpenURL(url, headers={}, user_data={}, cookieJar=None, justCookie=False):
 	req = Request(url)
@@ -121,16 +123,14 @@ def OpenURL(url, headers={}, user_data={}, cookieJar=None, justCookie=False):
 def animesfilme(): #510
 	link = OpenURL("https://raw.githubusercontent.com/D4anielCB/folder/main/filmes")
 	lista = re.compile("(.+);(.*)\s(.+)").findall(link)
-	mg = metahandlers.MetaData()
 	trak = traktM()
-	lista.sort()
+	#lista.sort()
 	try:
 		for name2,id2,url2 in lista:
 			dubleg="[COLOR yellow][D][/COLOR]" if "dublado" in url2 else "[COLOR blue][L][/COLOR]"
-			mm = mg.get_meta('movie',name2.encode("utf-8"), tmdb_id=id2)
+			mm = mg.get_tmdb_details(imdb_id="", tvdb_id="", title=name2, year="", media_type="movies", manual_select=False, ignore_cache=False)
 			pc = 1 if mm['imdbnumber'] in trak else None
-			#ST(mm)
-			AddDir(dubleg+" "+name2.encode("utf-8") + " (" + str(mm['year'])+")", url2, 503, "", mm['tmdb_id'], isFolder=False, IsPlayable=True, background=name2.encode("utf-8"), metah=mm, DL="", playcount=pc)
+			AddDir(dubleg+" "+mm['title'] + " (" + str(mm['year'])+")", url2, 503, "", mm['tmdb_id'], isFolder=False, IsPlayable=True, background=name2, metah=mm, DL="", playcount=pc)
 	except:
 		#ST(name2)
 		pass
@@ -176,7 +176,6 @@ def playanimenextvis(): #504
 	NF("Todos episódios assistidos")
 	sys.exit()
 def listanimevis(pastebin): #500
-	#mg = MetadataUtils()
 	#mm = mg.get_tvshow_details(title="dsfas3 23",tmdb_id="", ignore_cache=MUcache, lang=MUlang)
 	#mm = mg.get_tmdb_details(imdb_id="", tvdb_id="", title="The Flash", year="", media_type="tvshows", manual_select=False, ignore_cache=True)
 	#f = str(mm).encode('utf-8')
@@ -190,7 +189,6 @@ def listanimevis(pastebin): #500
 		link = OpenURL("https://raw.githubusercontent.com/D4anielCB/folder/main/"+pastebin).replace("\n","+")+"*"
 		lista = re.compile("\*?(.+?);(\d+)?;\+(.+?)\*").findall(link)
 		animes=[]
-		mg = MetadataUtils()
 		for name2,id2,cont in lista:
 			try:
 				mmm = mg.get_tvshow_details(title=name2,tmdb_id=id2, ignore_cache=MUcache, lang=MUlang)
@@ -217,7 +215,6 @@ def listseavis(): #501
 		if name2 == url:
 			cont1 = cont2
 	lista = re.compile("(\d+)?;?(.+?)\+").findall(cont1)
-	mg = MetadataUtils()
 	meta = eval(metah)
 	for season,url2 in lista:
 		try:
@@ -312,7 +309,6 @@ def playanimevis(): #503
 		sys.exit()
 def listfavanivis(): #508
 	#AddDir("Reload" , "", 40, isFolder=False)
-	mg = MetadataUtils()
 	try:
 		folder = os.path.dirname(os.path.dirname( addon_data_dir ))
 		folder = os.path.dirname(os.path.dirname( folder ))
@@ -323,7 +319,7 @@ def listfavanivis(): #508
 		for url,id,season in lista:
 			try:
 				if "animesvision.biz" in url:
-					url2 = urllib.unquote_plus(url)
+					url2 = unquote(url)
 					#ST(url2)
 					mmm = mg.get_tvshow_details(title="",tmdb_id=id, ignore_cache=MUcache, lang=MUlang)
 					metasea=mergedicts(mmm[-1],mmm[int(season)])
@@ -421,7 +417,6 @@ def Baixar(): #302 Baixar
 	arquivos=[]
 	DirM = Addon.getSetting("cDir")
 	mp4 = []
-	mu = MetadataUtils()
 	for dirname, dirnames, filenames in os.walk(DirM):
 		mp4_ = []
 		for filename in filenames:
@@ -429,7 +424,7 @@ def Baixar(): #302 Baixar
 				url2 = os.path.join(dirname, filename)
 				Serie = re.compile("([^\\\|\/]+) \((\d+)\)").findall(dirname)
 				Epi = re.compile("s(\d+)e(\d+)",re.IGNORECASE).findall(filename)
-				mmm = mu.get_tvshow_details(title=Serie[0][0],year=Serie[0][1],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(title=Serie[0][0],year=Serie[0][1],ignore_cache=MUcache, lang=MUlang)
 				if not ".srt" in filename:
 					arquivos.append( mmm[-1]['imdbnumber']+SEAS(Epi[0][0])+EPI(Epi[0][1]) )
 					mp4_.append([Epi[0][0],Epi[0][1], Serie[0][0],filename,url2,mmm[-1]])
@@ -497,7 +492,6 @@ def Latest(): #300
 	file = []
 	files = []
 	dirs1, files1 = xbmcvfs.listdir(DirM)
-	mu = MetadataUtils()
 	for d1 in dirs1:
 		DirM2 = os.path.join(DirM, d1)
 		dirs2, files2 = xbmcvfs.listdir(DirM2)
@@ -507,7 +501,7 @@ def Latest(): #300
 		if ano:
 			ano2=ano[0]
 		try:	
-			mmm = mu.get_tvshow_details(title= re.sub(' \(?\d{2,4}\)?', "", d1 ) , year=ano2, ignore_cache=MUcache, lang=MUlang)
+			mmm = mg.get_tvshow_details(title= re.sub(' \(?\d{2,4}\)?', "", d1 ) , year=ano2, ignore_cache=MUcache, lang=MUlang)
 		except:
 			ST(d1)
 		if "imdb_id" in mmm[-1]:
@@ -548,8 +542,7 @@ def Latest(): #300
 				pass
 	'''for tvshow, pasta2, file2, ss, S, E, imdb in files:
 		tvshow2 = re.sub(' \(?\d{2,4}\)?', "", tvshow )
-		#mu = MetadataUtils()
-		mmm = mu.get_tvshow_details(title=tvshow2,ignore_cache=MUcache, lang=MUlang)
+		mmm = mg.get_tvshow_details(title=tvshow2,ignore_cache=MUcache, lang=MUlang)
 		if mmm[-1]['imdbnumber'] in ml:
 			redgreen = "lightgreen" if s[5] == "1" else "maroon"
 			pc = 1 if mmm[-1]['imdbnumber']+str(int(S))+str(int(E)) in trak else None
@@ -564,7 +557,6 @@ def Next_epi(): #308
 		series = link.split("\n")
 		series.sort()
 		busca=[]
-		mu = MetadataUtils()
 		for m in series:
 			m2=m.split(",")
 			headers1 = {'Content-Type': 'application/json','trakt-api-version': '2','trakt-api-key': '888a9d79a643b0f4e9f58b5d4c2b13ee6d8bd584bc72bff8b263f184e9b5ed5d'}
@@ -573,7 +565,7 @@ def Next_epi(): #308
 				j=json.loads(response_body)
 				#mg = metahandlers.MetaData()
 				#meta = mg.get_meta('tvshow', m2[0], imdb_id=m2[2])
-				mmm = mu.get_tvshow_details(title=m2[0],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(title=m2[0],ignore_cache=MUcache, lang=MUlang)
 				AddDir2("","", 405, iconimage, iconimage, isFolder=False, IsPlayable=True, background=str(j['season']), metah=mmm[-1], episode=str(j['number']), DL="[COLOR lightgreen]"+m2[0]+"[/COLOR] ")
 			except:
 				pass
@@ -596,7 +588,6 @@ def Series(x): #60
 	#mm = m.get_tvshow_details(title="Rick And Morty",ignore_cache=MUcache, lang=MUlang)
 	#ST(mm)
 	#return
-	mg = MetadataUtils()
 	if "nfewBmAL" in x:
 		AddDir("Superflix" , "", 409, isFolder=True)
 	if "http" in x:
@@ -659,7 +650,6 @@ def Series2(): #69
 # --------------  NETCINE
 def ListSNC(x): #61
 	trak = traktS()
-	mu = MetadataUtils()
 	#AddDir("Reload" , "", 40, isFolder=False)
 	try:
 		url2 = re.sub('netcine\.[^\/]+', 'netcine.biz', url)
@@ -669,7 +659,7 @@ def ListSNC(x): #61
 		if "None" in background: #season
 			for season2,epis in m:
 				metah2 = eval(metah)
-				mmm = mu.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
 				try:
 					metasea=mergedicts(mmm[-1],mmm[int(season2)])
 					AddDir2("Temporada "+season2+ " [COLOR yellow][NC][/COLOR]" ,url, 61, iconimage, iconimage, isFolder=True, background=i, metah=metasea)
@@ -839,7 +829,6 @@ def TemporadasRC(x): #135 Episodios
 	temps = re.compile('(<span style="font-size: x-large;">(.+?)<\/span>)').findall(link)
 	inicio = re.compile('i\=(\d+)').findall(url2)
 	i = 0
-	mu = MetadataUtils()
 	if inicio:
 		for s in range(0, int(inicio[0])):
 			del temps[0]
@@ -851,7 +840,7 @@ def TemporadasRC(x): #135 Episodios
 				#if tempname[0]!="0":
 				metah2 = eval(metah)
 				#ST(metah2)
-				mmm = mu.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
 				try:
 					metasea=mergedicts(mmm[-1],mmm[int(tempname[0])])
 					AddDir2("Temporada " + tempname[0] + " [COLOR blue][RC][/COLOR]", url, 135, iconimage, iconimage, info="", isFolder=True, index=i, background=tempname[0], metah=metasea)
@@ -1182,11 +1171,10 @@ def PlaySMM(): #194
 def ListSSF(): #401
 	l = OpenURL(url).replace("\n","").replace("\r","")
 	m = re.compile('Temporada ?.{5,6}(\d+)(.+?)\<\/Season\>').findall(l)
-	mu = MetadataUtils()
 	for temp2,cont2 in m:
 		metah2 = eval(metah)
 		#ST(metah2)
-		mmm = mu.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
+		mmm = mg.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
 		try:
 			metasea=mergedicts(mmm[-1],mmm[int(temp2)])
 			AddDir2("Temporada "+ temp2 +" [COLOR lightgreen][SF][/COLOR]" ,cont2, 402, iconimage, iconimage, isFolder=True, background=int(temp2), metah=metasea)
@@ -1285,10 +1273,9 @@ def LatestSSF(): #409
 	try:
 		l = OpenURL("http://easytvonline.tk/rc/leg/pb2.php")
 		m = re.compile("(.+;.+)\s").findall(l)
-		mu = MetadataUtils()
 		for x in m:
 			s = x.split(";")
-			mmm = mu.get_tvshow_details(title=s[1],ignore_cache=MUcache, lang=MUlang)
+			mmm = mg.get_tvshow_details(title=s[1],ignore_cache=MUcache, lang=MUlang)
 			redgreen = "lightgreen" if s[5] == "1" else "maroon"
 			AddDir2("","", 405, iconimage, iconimage, isFolder=False, IsPlayable=True, background=s[2], metah=mmm[-1], episode=s[3], DL="[COLOR "+redgreen+"]"+s[1]+"[/COLOR] ", playcount=s[5])
 	except:
@@ -1329,7 +1316,7 @@ def baixarsf(link=""):
 # ----------------- Inicio https://www.erai-raws.info/
 def eraianime(): #520
 	#AddDir("Reload" , "", 40, isFolder=False)
-	AddDir("[B][Animes Fav][/B]" , "", 522, isFolder=True)
+	AddDir("[B][Erai-Raws][/B]" , "", 522, isFolder=True)
 	link = OpenURL("https://www.erai-raws.info/anime-list/")
 	lista = re.compile("href\=\"([^\"]+)\" title\=\"([^\"]+)\"").findall(link)
 	for url2,title2 in lista:
@@ -1344,7 +1331,7 @@ def erailistepi(): #521
 			if not lista:
 				lista = re.compile("http.+?1080p.+?.torrent").findall(text)
 			for magnet in lista:
-				magnet2 = urllib.unquote(magnet.encode("utf-8"))
+				magnet2 = unquote(magnet)
 				title2 = re.compile("dn=(.+?)(\&|$)").findall(magnet2)
 				if not title2:
 					title2 = magnet2.split("/")
@@ -1361,7 +1348,6 @@ def erailistepi(): #521
 def listreaianimemeta(): #522
 	link = OpenURL("https://raw.githubusercontent.com/D4anielCB/folder/main/erai-raws")
 	lista = re.compile("(.+);(.*)\s(\d+)?;?(.+)").findall(link)
-	mg = MetadataUtils()
 	for title,id,season,url2 in lista:
 		try:
 			#meta = eval(metah)
@@ -1382,7 +1368,7 @@ def retsitereai(action,anime): ############
 		myobj = {'action':action, 'page': 0, 'query':  q }
 		head = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.62 Safari/537.36', 'Accept-Encoding': 'identity', 'Content-Type': 'application/x-www-form-urlencoded', 'DNT': '1'}
 		resp = requests.post(url, data = myobj, headers=head)
-		return resp.text.encode("utf-8")
+		return resp.text.replace("\n", '\r\n')
 	except:
 		return ""
 def listreaiepimeta(): #523
@@ -1390,12 +1376,14 @@ def listreaiepimeta(): #523
 	loads = ["load_more_0","load_more_5"]
 	trak = traktS()
 	meta = eval(metah)
+	text = retsitereai("load_more_0",url)
 	for l in loads:
 		text = retsitereai(l,url)
 		try:
 			lista = re.compile("magnet:\?.+?1080p[^\"]+").findall(text)
 			for magnet in lista:
-				magnet2 = urllib.unquote(magnet.encode("utf-8"))
+				magnet2 = unquote(magnet)
+				ST(magnet2)
 				E = re.compile("\- ?(\d+)").findall(magnet2)
 				title2 = re.compile("dn=(.+?)(\&|$)").findall(magnet2)
 				hevec = "[+] " if "HEVC" in magnet else ""
@@ -1418,7 +1406,6 @@ def PlayUrl(name, url, iconimage=None, info='', sub=''):
 	if metah:
 		try:
 			metah2 = eval(metah)
-			mg = MetadataUtils()
 			eInfo_ = mg.get_episode_details(metah2['tmdb_id'], SEAS(background), EPI(episode))
 			eInfo = mergedicts(metah2,eInfo_)
 			eInfo["Title"]= eInfo['EpisodeTitle']
@@ -1491,20 +1478,13 @@ def AddDir(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=T
 			liz.setArt({"thumb": eInfo['cover_url'], "poster": eInfo['cover_url'], "banner": eInfo['cover_url'], "fanart": eInfo['backdrop_url'] })
 			infoLabels = metah
 			eInfo['userrating'] = eInfo['rating']
-			eInfo['mediatype'] = u'tvshow'
+			eInfo['mediatype'] = u'movie'
+			#ST(eInfo)
 			if playcount:
 				eInfo['playcount'] = playcount
 			else:
 				eInfo.pop('playcount', 1)
-			liz.setInfo( type="Video", infoLabels= eInfo )
-			#liz.setInfo( type='Video', {'premiered': '2018-01-01'} )
-			#liz.setInfo('video', { 'Premiered': '01-01-2018' })
-			#ST(SEAS(background))
-			#eInfo = re.sub('\'duration\'\:[^,]+,', '', str(eInfo) )
-			#eInfo = eval(eInfo)
-			#liz.setRating("imdb", 4.6, 8940, False)
-			#a = mg.get_seasons("Supergirl", "tt4016454", [1])
-			#ST(a)
+			liz.setInfo( "video",  eInfo )
 		else:
 			metah['mediatype'] = u'tvshow'
 			metah['Imdbnumber'] = metah['imdbnumber']
@@ -1512,10 +1492,21 @@ def AddDir(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=T
 				metah['playcount'] = playcount
 			else:
 				metah.pop('playcount', 1)
-			#metah['cast']=['a','b']
-			liz=xbmcgui.ListItem(DL +""+name, metah['cover_url'], metah['cover_url'])
-			liz.setArt({"poster": metah['cover_url'], "banner": metah['cover_url'], "fanart": metah['backdrop_url'] })
-			liz.setInfo( type="Video", infoLabels= metah )
+			liz=xbmcgui.ListItem(DL +""+name)
+			liz.setArt({"poster": metah['art']['poster'], "banner": metah['art']['poster'], "fanart": metah['art']['fanart'] })
+			count=0
+			if "cast" in metah:
+				count = 0
+				for value in metah['cast']:
+					for value2 in value:
+						if 'thumbnail' in metah['cast'][count]:
+							metah['cast'][count]['thumbnail']=metah['cast'][count]['thumbnail'].replace("/original/","/w300/")
+					count+=1
+				liz.setCast(metah['cast'])
+			metah.pop('cast', 1)
+			metah.pop('castandrole', 1)
+			metah.pop('art', 1)
+			liz.setInfo( "video", metah )
 	else:
 		liz = xbmcgui.ListItem(name ,iconimage, iconimage)
 		liz.setInfo(type="Video", infoLabels={ "Title": name, "Plot": info, "Imdbnumber": "tt0460681" })
@@ -1541,7 +1532,6 @@ def AddDir2(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=
 	urlParams = {'name': name, 'url': url, 'mode': mode, 'iconimage': iconimage, 'logos': logos, 'cache': cacheMin, 'index': index, 'info': info, 'background': background, 'DL': DL, 'year': year, 'metah': metah, 'episode': episode, 'playcount': playcount}
 	if metah:
 		if background and episode:
-			mg = MetadataUtils()
 			eInfo = mg.get_episode_details(metah['tmdb_id'], SEAS(background), EPI(episode), ignore_cache=MUcacheEpi, lang=MUlang)
 			eInfo2 = mergedicts(metah,eInfo)
 			#eInfo2['imagepi'] = eInfo2['imagepi'].replace("/original/","/w780/")
@@ -1608,18 +1598,20 @@ def AddDir2(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=
 	
 def ListImdb(): #352
 	file = os.path.join(addon_data_dir, 'imdb.txt')
+	#ST(file)
+	return
 	chList = common.ReadList(file)
 	#chList = sorted(chList, key=lambda k: k['nome'], reverse=False)
 	i = 0
-	mg = metahandlers.MetaData()
 	for channel in reversed(chList):
-		if i == 100: break
+		if i == 3: break
 		try:
 			mm = mg.get_meta('movie', urllib.quote(channel["nome"].encode("utf-8")), tmdb_id=channel["id"])
+			ST(mm)
 			mm['tagline'] = mm['genre']
 			#AddDir(mm['title'] + " / " + channel["name"].encode("utf-8"), channel["url"].encode("utf-8"), 96, "", "", isFolder=False, IsPlayable=True, background=channel["name"].encode("utf-8"), metah=mm, DL="["+str(mm['rating'])+"]", index = i)
 			#AddDir(channel["nome"] + " (" + channel["ano"]+")", channel["url"].encode("utf-8"), 96, "", "", isFolder=False, IsPlayable=True, background=channel["name"].encode("utf-8"), metah=mm, DL="["+str(mm['rating'])+"]", index = i)
-			mm['title'] = urllib.unquote(mm['title'].encode("utf-8"))
+			mm['title'] = unquote(mm['title'].encode("utf-8"))
 			AddDir(mm['title'] + " (" + str(channel["ano"])+")", channel["url"].encode("utf-8"), 96, "", "", isFolder=False, IsPlayable=True, background=channel["name"].encode("utf-8"), metah=mm, DL="["+str(mm['rating'])+"]", index = i)
 		except:
 			pass
@@ -1646,7 +1638,7 @@ def ListImdbOut(): #353
 			mm = mg.get_meta('movie', urllib.quote(channel[Idi].encode("utf-8")), tmdb_id=channel["id"])
 			mm['tagline'] = mm['genre']
 			if Clista[int(Cat)] in mm['genre'].encode("utf-8") or Cat=="0":
-				mm['title'] = urllib.unquote(mm['title'].encode("utf-8"))
+				mm['title'] = unquote(mm['title'].encode("utf-8"))
 				pc = 1 if mm['imdbnumber'] in trak else None
 				#AddDir(mm['title'] + " (" + str(channel["ano"])+")", channel["url"].encode("utf-8"), 96, "", "", isFolder=False, IsPlayable=True, background=channel["name"].encode("utf-8"), metah=mm, DL="["+str(mm['rating'])+"]", index = -1)
 				AddDir(mm['title'] + " (" + str(channel["ano"])+")", channel["url"].encode("utf-8"), 97, "", mm['tmdb_id'], isFolder=False, IsPlayable=True, background=channel["name"].encode("utf-8"), metah=mm, DL="", index = -1, playcount=pc)
@@ -1836,23 +1828,26 @@ def Biblioteca(): #100
 		return
 	if str( len(j) ) == Addon.getSetting("DirCount"):
 		xbmc.sleep(1000)
-		xbmc.executebuiltin('XBMC.UpdateLibrary(video)')
+		xbmc.executebuiltin('UpdateLibrary(video)')
 		return
 	for x in j:
 		try:
-			t = x['name'].encode("utf-8").replace('&','e').replace(' ','_').replace('\'','').replace(':','').replace('?','').replace('*','')
-			f = open(DirB+'/'+t+'_('+x['ano']+')'+x['url']+'.strm','wb')
+			t = x['name'].replace('&','e').replace(' ','_').replace('\'','').replace(':','').replace('?','').replace('*','')
+			dir = os.path.join(DirB,t+'_('+x['ano']+')'+x['url'].replace(".html","")+'.strm')
+			f = open(dir,'w')
 			f.write('plugin://plugin.video.CubePlayMeta/?DL=&iconimage='+x['id']+'&index=&background=None&year=&info=&logos=&episode=&name=&url='+x['url']+'&cache=0&metah=%7B%7D&mode=97&playcount=None')
 			f.close()
 		except:
-			f = open(DirB+'/V/'+x['id']+'.txt','wb')
+			#pass
+			dir = os.path.join(DirB,+x['url'].replace(".html","")+'.txt')
+			f = open(dir,'w')
 			f.write('')
 			f.close()
+		#break
 	Addon.setSetting("DirCount", str( len(j) )  )
 	NF("Atualizando Biblioteca")
 	xbmc.sleep(1000)
-	xbmc.executebuiltin('XBMC.UpdateLibrary(video)')
-	
+	xbmc.executebuiltin('UpdateLibrary(video)')
 def convert_size(size_bytes):
 	if size_bytes == 0:
 		return "0B"
