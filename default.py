@@ -236,6 +236,7 @@ def listseavis(): #501
 			mmm = mg.get_tvshow_details(title="",tmdb_id=meta['tmdb_id'], ignore_cache=MUcache, lang=MUlang)
 			season = "1" if season == "" else season
 			metasea=mergedicts(meta,mmm[int(season)])
+			metasea['mediatype'] = "episode"
 			dubleg="[COLOR yellow][D][/COLOR]" if "dublado" in url2 else "[COLOR blue][L][/COLOR]"
 			plus = "+" if "i=" in url2 else ""
 			AddDir2(dubleg+"["+season+"]"+plus+" "+metasea["TVShowTitle"], url2, 504, "", "", info="", isFolder=False, IsPlayable=True, background=season, metah=metasea)
@@ -435,7 +436,7 @@ def Baixar(): #302 Baixar
 	for item1 in ultimos:
 		try:
 			if not item1[0] in arquivos:
-				mmm = mu.get_tvshow_details(title=item1[1],year=item1[3],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(title=item1[1],year=item1[3],ignore_cache=MUcache, lang=MUlang)
 				exclui=[ item1[1],item1[3], item1[2]['season'], item1[2]['number'] ]
 				#AddDir( str(item1[2]['ids']['imdb']), item1[4], 303, "", "", isFolder=False, IsPlayable=True, background=str(item1[2]['season']), metah=mmm , episode=str(item1[2]['number']), DL="[B]"+str(item1[1])+"[/B] ")
 				pc = 1 if item1[0] in trak else None
@@ -855,7 +856,7 @@ def TemporadasRC(x): #135 Episodios
 			tempname = re.compile('\d+').findall(tempname)
 			if tempname:
 				metah2 = eval(metah)
-				mmm = mu.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
+				mmm = mg.get_tvshow_details(metah2['tmdb_id'],ignore_cache=MUcache, lang=MUlang)
 				try:
 					metasea=mergedicts(mmm[-1],mmm[int(tempname[0])])
 					AddDir2("Play Temp. " + tempname[0] + " [COLOR blue][RC][/COLOR]", url, 138, iconimage, iconimage, info="", isFolder=False, index=i, background=tempname[0], metah=metasea, IsPlayable=True)
@@ -1416,7 +1417,7 @@ def PlayUrl(name, url, iconimage=None, info='', sub=''):
 			#eInfo.pop('tmdb_id', 1)
 			#eInfo['plot'] += "\nAired: " +Data(str(eInfo['premiered']))
 			#eInfo['plot'] = u"\n[COLOR button_focus]Exibição:[/COLOR] " +Data(str(eInfo['premiered'])) if MUlang == "pt-BR" else "\nAired: " +Data(str(eInfo['premiered']))
-			eInfo['genre'] = '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]
+			#eInfo['genre'] = '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]
 			listitem.setInfo( "video",  eInfo )
 			#listitem.setInfo( "Video",  {'genre': '[COLOR button_focus]S'+str(eInfo['season'])+'E'+str(eInfo['episode'])+'[/COLOR]: '+eInfo["TVShowTitle"]} )
 		except:
@@ -1538,6 +1539,7 @@ def AddDir2(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=
 			#eInfo2['cover_url'] = eInfo2['cover_url'].replace("/original/","/w500/")
 			#eInfo2['backdrop_url'] = eInfo2['backdrop_url'].replace("/original/","/w780/")
 			eInfo2['playcount'] = 1 if playcount else 0
+			eInfo2['mediatype'] = "episode"
 			#eInfo2['userrating'] = eInfo2['rating']
 			if 'EpisodeTitle' in eInfo2:
 				#liz=xbmcgui.ListItem(DL+"[COLOR white]"+background+"x"+EPI(episode)+". "+eInfo2['EpisodeTitle']+"[/COLOR]")
@@ -1568,7 +1570,8 @@ def AddDir2(name, url, mode, iconimage='', logos='', index="", move=0, isFolder=
 			if "cast" in metah:
 				liz.setCast(metah['cast'])
 			metah.pop('cast', 1)
-			metah['mediatype'] = u'tvshow'
+			if not 'mediatype' in metah:
+				metah['mediatype'] = u'tvshow'
 			metah['tagline'] = ""
 			for i in metah['genre']:
 				metah['tagline'] = i if metah['tagline'] == "" else metah['tagline'] + ", " + i
